@@ -28,7 +28,7 @@ def get_acc(y_true, y_pred):
     assert y_true.size() == y_pred.size()
     return (y_pred >= 0.0).eq(y_true >= 0.5).sum().float().item() / y_pred.numel()
 
-
+# 量化
 def quantize(frames):
     # [-1.0, 1.0] -> {0, 255} -> [-1.0, 1.0]
     return ((frames + 1.0) * 127.5).int().float() / 127.5 - 1.0
@@ -36,6 +36,8 @@ def quantize(frames):
 
 def make_pair(frames, data_dim, use_bit_inverse=True, multiplicity=1):
     # Add multiplicity to further stabilize training.
+    # torch.cat是将两个张量（tensor）拼接在一起，cat是concatnate的意思
+    # 将frames拼接在一起，dim=0代表按行拼接
     frames = torch.cat([frames] * multiplicity, dim=0).cuda()
     data = torch.zeros((frames.size(0), data_dim)).random_(0, 2).cuda()
 

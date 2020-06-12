@@ -18,7 +18,7 @@ class Crop(nn.Module):
         super(Crop, self).__init__()
         self.min_pct = min_pct
         self.max_pct = max_pct
-
+    # pct的作用？
     def _pct(self):
         return self.min_pct + random() * (self.max_pct - self.min_pct)
 
