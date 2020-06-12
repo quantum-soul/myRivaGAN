@@ -56,6 +56,7 @@ class RivaGAN(object):
         self.data_dim = data_dim
         self.adversary = Adversary().cuda()
         self.critic = Critic().cuda()
+        #初始化默认使用attention
         if model == "attention":
             self.encoder = AttentiveEncoder(data_dim=data_dim).cuda()
             self.decoder = AttentiveDecoder(self.encoder).cuda()

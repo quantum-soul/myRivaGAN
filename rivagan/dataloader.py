@@ -28,7 +28,7 @@ class VideoDataset(Dataset):
         self.videos = []
         for ext in ["avi", "mp4"]:
             #for path in glob(os.path.join(root_dir, "**/*.%s" % ext), recursive=True):
-            for path in glob(root_dir + '/*'):
+            for path in glob(root_dir + '/*.%s' % ext):
                 cap = cv2.VideoCapture(path)
                 nb_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
                 self.videos.append((path, nb_frames))
