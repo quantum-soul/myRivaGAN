@@ -33,16 +33,20 @@ def quantize(frames):
     # [-1.0, 1.0] -> {0, 255} -> [-1.0, 1.0]
     return ((frames + 1.0) * 127.5).int().float() / 127.5 - 1.0
 
-
+# data是水印数据
+# Hamming vector pairs
 def make_pair(frames, data_dim, use_bit_inverse=True, multiplicity=1):
     # Add multiplicity to further stabilize training.
     # torch.cat是将两个张量（tensor）拼接在一起，cat是concatnate的意思
     # 将frames拼接在一起，dim=0代表按行拼接
     frames = torch.cat([frames] * multiplicity, dim=0).cuda()
+    # random_将tensor用从在[from, to-1]上的正态分布或离散正态分布取样值进行填充。
+    # 如果没有明确说明，则填充值仅由本tensor的数据类型限定。
     data = torch.zeros((frames.size(0), data_dim)).random_(0, 2).cuda()
 
     # Add the bit-inverse to stabilize training.
     if use_bit_inverse:
+    	# 将两个N/2的张量拼接
         frames = torch.cat([frames, frames], dim=0).cuda()
         data = torch.cat([data, 1.0 - data], dim=0).cuda()
 
@@ -125,6 +129,7 @@ class RivaGAN(object):
                 "val.mjpeg_acc": [],
             }
 
+            # 垃圾回收
             gc.collect()
             self.encoder.train()
             self.decoder.train()
@@ -138,8 +143,11 @@ class RivaGAN(object):
                     wm_frames = self.encoder(frames, data)
                     adv_loss = 0.0
                     if use_critic:
+                    	# critic计算一个score，评估视频质量，差值越大表明critic的loss越大
+                    	# The Wasserstein loss to distinguish between source and watermarked videos
                         adv_loss += torch.mean(self.critic(frames) - self.critic(wm_frames))
                     if use_adversary:
+                    	# adversary破坏水印，adv_loss -= loss,adversary效果越好loss越大，adv_loss越小
                         adv_loss -= functional.binary_cross_entropy_with_logits(
                             self.decoder(self.adversary(wm_frames)), data)
                     D_opt.zero_grad()
@@ -160,6 +168,7 @@ class RivaGAN(object):
                     wm_frames = self.encoder(frames, data)
                     loss = 0.0
                     if use_critic:
+                    	#score作为loss？score是分类结果，越高表明分类准确，则encoder的loss越大
                         critic_loss = torch.mean(self.critic(wm_frames))
                         loss += 0.1 * critic_loss
                     if use_adversary:
@@ -269,6 +278,7 @@ class RivaGAN(object):
             frame = torch.FloatTensor([frame]) / 127.5 - 1.0      # (L, H, W, 3)
             frame = frame.permute(3, 0, 1, 2).unsqueeze(0).cuda()  # (1, 3, L, H, W)
             wm_frame = self.encoder(frame, data)                       # (1, 3, L, H, W)
+            # 将输入input张量每个元素的夹紧到区间 [min,max]，并返回结果到一个新张量。
             wm_frame = torch.clamp(wm_frame, min=-1.0, max=1.0)
             wm_frame = (
                 (wm_frame[0, :, 0, :, :].permute(1, 2, 0) + 1.0) * 127.5

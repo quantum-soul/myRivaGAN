@@ -13,6 +13,7 @@ def multiplicative(x, data):
     Input: (N, C_{in}, L, H, W), (N, D)
     Output: (N, C_{in}, L, H, W)
     """
+    # N is the batch size, L is the sequence length
     N, D = data.size()
     N, C, L, H, W = x.size()
     assert D <= C, "data dims must be less than channel dims"
@@ -84,4 +85,7 @@ class AttentiveDecoder(nn.Module):
         N, D, L, H, W = frames.size()
         attention = functional.softmax(self._attention(frames), dim=1)
         x = self._conv(frames) * attention
+        # mean()函数的参数：返回输入张量给定维度dim上每行的均值。dim=0,按行求平均值，返回的形状是（1，列数）；
+        # dim=1,按列求平均值，返回的形状是（行数，1）,默认不设置dim的时候，返回的是所有元素的平均值。
+        # 这里相当于返回D个（W,H）的均值
         return torch.mean(x.view(N, self.data_dim, -1), dim=2)
